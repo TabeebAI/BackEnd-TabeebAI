@@ -16,7 +16,6 @@ class DoctorsDB(models.Model):
     license_number = models.CharField(unique=True)
     phone=models.CharField(max_length=15)
     national_id=models.CharField(max_length=20,unique=True)
-    is_admin=models.BooleanField(default=False)
     region=models.CharField(max_length=30,default="دمشق")
     neighborhood=models.CharField(max_length=40 ,default="الحميدية")
 

@@ -7,7 +7,6 @@ class LoginDR(serializers.Serializer):
         full_name=serializers.CharField()
         national_id=serializers.CharField()
         license_number=serializers.CharField()
-        is_admin=serializers.CharField()
         def validate(self,data):
                 full_name=data.get('full_name')
                 national_id=data.get('national_id')

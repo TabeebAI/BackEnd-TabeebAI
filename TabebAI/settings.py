@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+
+    'corsheaders',
     #اضافاات تسجيل الدخول 
     'django.contrib.sites',
     #1 اعدادات dj-rest-auth
@@ -53,11 +55,9 @@ INSTALLED_APPS = [
     #app
     'users',
     'Doctor',
-
-    
+    'Patients',    
 ]
-
-
+PASSWORD_RESET_CONFIRM_URL = "TabebAI/password/reset/confirm/{uid}/{token}/"
 
 
 REST_AUTH_TOKEN_MODEL=None
@@ -67,7 +67,8 @@ ACCOUNT_AUTHENTICATION_METHOD = "username"
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_PASSWORD_RESET_CONFIRM_URL = 'reset-password/{uid}/{token}/'
 
-FRONTEND_URL = 'http://localhost:3000'  
+FRONTEND_URL = "http://localhost:5173"
+  
 
 DJANGO_REST_AUTH = {
     "PASSWORD_RESET_CONFIRM_URL": "password/reset/confirm/{uid}/{token}/",  
@@ -82,6 +83,7 @@ EMAIL_HOST_USER = 'almtwali1222@gmail.com'
 EMAIL_HOST_PASSWORD = 'ssvs auom hzaf jbou'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -92,9 +94,33 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     #الاضافات
     'allauth.account.middleware.AccountMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',    
 ]
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+REST_FRAMEWORK = {
+  "DEFAULT_AUTHENTICATION_CLASSES": [
+    "rest_framework.authentication.SessionAuthentication",  
+    "rest_framework.authentication.TokenAuthentication",
+  ],
+  "DEFAULT_PERMISSION_CLASSES": [
+    "rest_framework.permissions.IsAuthenticated",
+  ],
+}
+
 
 ROOT_URLCONF = 'TabebAI.urls'
+
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24  
+
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
 
 TEMPLATES = [
     {

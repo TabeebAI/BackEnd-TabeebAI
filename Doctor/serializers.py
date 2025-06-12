@@ -3,6 +3,8 @@
 from rest_framework import serializers
 from .models import DoctorsDB
 from rest_framework.validators import UniqueValidator
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
 class LoginDR(serializers.Serializer):
         full_name=serializers.CharField()
         national_id=serializers.CharField()
@@ -14,10 +16,11 @@ class LoginDR(serializers.Serializer):
                 DR = DoctorsDB.objects.filter(license_number=license_number,national_id=national_id,full_name=full_name).first()
                 if not DR:
                         raise serializers.ValidationError("يوجد خطأ بالبيانات ")
-                data['DR']=DR
+                data['DR']=DR.user
                 return data
     
 class CreateDR(serializers.ModelSerializer):
+        user = serializers.PrimaryKeyRelatedField(read_only=True)
         full_name=serializers.CharField()
         gender=serializers.CharField(required=True,error_messages={
               'required' : 'M \ F'   
@@ -45,7 +48,7 @@ class CreateDR(serializers.ModelSerializer):
         )
         class Meta:
                 model = DoctorsDB
-                fields=[
+                fields=["user",
                 'full_name' , 'gender' , 'specialty','license_number',
                 'phone','national_id','region','neighborhood'
                 ]   
@@ -73,9 +76,26 @@ class CreateDR(serializers.ModelSerializer):
 
                 return license_str
         
-        def create(self,validated_data):
+        def create(self, validated_data):
+                request = self.context.get('request')
+                username = validated_data.get('license_number')
+                password = validated_data.get('national_id')
 
-                return DoctorsDB.objects.create(**validated_data)
+                user = User.objects.create_user(username=username, password=password)
+                Token.objects.create(user=user)
+                doctor = DoctorsDB.objects.create(user=user, **validated_data)
+                return doctor
 
 
-
+class profil(serializers.ModelSerializer):
+        
+        class Meta:
+                model =DoctorsDB
+                fields=['id','full_name','gender','specialty','license_number','phone',
+                        'national_id','region','neighborhood']
+        def update(seld,instance,validated_data):
+                readonlu_field=['full_name','gender','license_number','national_id']
+                for field in readonlu_field:
+                        if field in validated_data:
+                                validated_data.pop(field)
+                return super().update(instance,validated_data)

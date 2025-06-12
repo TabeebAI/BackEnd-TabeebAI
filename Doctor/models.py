@@ -6,6 +6,8 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 class DoctorsDB(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='doctor_profile', null=True, blank=True)
+
     full_name=models.CharField(max_length=30)
     GENDER_CHOICES = [
     ('M', 'ذكر'),

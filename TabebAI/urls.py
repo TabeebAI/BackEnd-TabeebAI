@@ -17,15 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path ,include
 from django.contrib.auth import views as auth_views
-from Doctor.views import LoginDRViwe ,CreateDoctor
+from Doctor.views import LoginDRViwe ,CreateDoctor,profilDR
 from Patients.views import PatientsView
 from rest_framework.routers import DefaultRouter
 
 
 router = DefaultRouter()
-router.register(r'profile', PatientsView, basename='profile')
+router.register(r'profile', PatientsView, basename='patient/profile')
 from dj_rest_auth.views import PasswordResetConfirmView
-
+routerDR =DefaultRouter()
+routerDR.register(r'profile',profilDR,basename='doctor/profile')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('TabebAI/',include('dj_rest_auth.urls')),
@@ -34,4 +35,5 @@ urlpatterns = [
     path('TabebAI/DR/login/',LoginDRViwe.as_view(),name='DR_login'),
     path("TabebAI/CreateDoctor/",CreateDoctor.as_view()),
     path('TabebAI/overview/', include(router.urls)),   
+    path('TabebAI/DR/OverView/',include(routerDR.urls)),
     ]       

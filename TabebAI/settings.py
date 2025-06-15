@@ -26,7 +26,6 @@ SECRET_KEY = 'django-insecure-_&(6m7f55(qkeoqrpxq971h5)mm(fi7c&3l9wjtonfvh)zrqj@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -56,9 +55,9 @@ INSTALLED_APPS = [
     'users',
     'Doctor',
     'Patients',    
+    'QR',
 ]
 PASSWORD_RESET_CONFIRM_URL = "TabebAI/password/reset/confirm/{uid}/{token}/"
-
 
 REST_AUTH_TOKEN_MODEL=None
 SITE_ID = 1
@@ -141,6 +140,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'TabebAI.wsgi.application'
 
+ALLOWED_HOSTS = ['*']
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases

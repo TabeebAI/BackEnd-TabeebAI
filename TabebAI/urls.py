@@ -25,6 +25,7 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.register(r'profile', PatientsView, basename='patient/profile')
 from dj_rest_auth.views import PasswordResetConfirmView
+from QR.views import QrJwt ,QR_Token ,Doctor_Visit,Patient_Visit
 routerDR =DefaultRouter()
 routerDR.register(r'profile',profilDR,basename='doctor/profile')
 urlpatterns = [
@@ -36,4 +37,8 @@ urlpatterns = [
     path("TabebAI/CreateDoctor/",CreateDoctor.as_view()),
     path('TabebAI/overview/', include(router.urls)),   
     path('TabebAI/DR/OverView/',include(routerDR.urls)),
+    path("TabebAI/QRcode/",QrJwt),
+    path("visit/token/<str:token>/",QR_Token),
+    path('TabebAI/Doctor/visits/',Doctor_Visit),
+    path('TabebAI/Patient/visits/',Patient_Visit),
     ]       

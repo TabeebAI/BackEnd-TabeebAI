@@ -26,7 +26,7 @@ from .serializers import VisitsDoctor ,VisitsPatient
 
 
 
-@login_required(login_url='/TabebAI/login/')
+@permission_classes([IsAuthenticated])
 def QrJwt(request,code=None):
     patient=request.user.patient_profile
 
@@ -38,7 +38,7 @@ def QrJwt(request,code=None):
         "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
     }
     token=jwt.encode(payload,settings.SECRET_KEY,algorithm="HS256")
-    qr_data=f"http://192.168.1.108:8000/visit/token/{token}/"
+    qr_data=f"http://127.0.0.1:8000/visit/token/{token}/"
 
     img =qrcode.make(qr_data)
     buffer=BytesIO()

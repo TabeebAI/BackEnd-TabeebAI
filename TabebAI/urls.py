@@ -28,6 +28,8 @@ from dj_rest_auth.views import PasswordResetConfirmView
 from QR.views import QrJwt ,QR_Token ,Doctor_Visit,Patient_Visit
 routerDR =DefaultRouter()
 routerDR.register(r'profile',profilDR,basename='doctor/profile')
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('TabebAI/',include('dj_rest_auth.urls')),
@@ -41,4 +43,5 @@ urlpatterns = [
     path("visit/token/<str:token>/",QR_Token),
     path('TabebAI/Doctor/visits/',Doctor_Visit),
     path('TabebAI/Patient/visits/',Patient_Visit),
+
     ]       

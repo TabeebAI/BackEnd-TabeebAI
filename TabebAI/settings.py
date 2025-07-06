@@ -56,9 +56,13 @@ INSTALLED_APPS = [
     'Doctor',
     'Patients',    
     'QR',
+    'RAG',
+    'AvatarAI',
 ]
-PASSWORD_RESET_CONFIRM_URL = "TabebAI/password/reset/confirm/{uid}/{token}/"
 
+PASSWORD_RESET_CONFIRM_URL = "TabebAI/password/reset/confirm/{uid}/{token}/"
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 REST_AUTH_TOKEN_MODEL=None
 SITE_ID = 1
 ACCOUNT_EMAIL_VERIFICATION = "none"
@@ -153,8 +157,7 @@ DATABASES = {
         'PASSWORD':'2002',
         'HOST':'localhost',
         'PORT':'5432',
-        
-
+    
         }
 }
 

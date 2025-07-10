@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -104,7 +105,14 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://bdc1-137-184-161-129.ngrok-free.app/",
+]
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'ngrok-skip-browser-warning',
+]
 
 REST_FRAMEWORK = {
   "DEFAULT_AUTHENTICATION_CLASSES": [

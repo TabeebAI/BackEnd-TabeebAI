@@ -43,5 +43,4 @@ urlpatterns = [
     path("visit/token/<str:token>/",QR_Token),
     path('TabebAI/Doctor/visits/',Doctor_Visit),
     path('TabebAI/Patient/visits/',Patient_Visit),
-
     ]       

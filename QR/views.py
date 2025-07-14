@@ -24,8 +24,10 @@ from django.db.models import Q
 
 from .serializers import VisitsDoctor ,VisitsPatient
 
-
-
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def QrJwt(request,code=None):
     patient=request.user.patient_profile
@@ -126,7 +128,9 @@ def  QR_Token(request,token):
 
 
 @api_view(['GET'])
+@authentication_classes([JWTAuthentication])
 @permission_classes([IsAuthenticated])
+
 def Doctor_Visit(request):
     doctor = DoctorsDB.objects.filter(user=request.user).first()
     if not doctor:

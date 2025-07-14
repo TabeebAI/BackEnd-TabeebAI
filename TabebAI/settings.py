@@ -71,8 +71,22 @@ ACCOUNT_AUTHENTICATION_METHOD = "username"
 ACCOUNT_EMAIL_REQUIRED = False
 ACCOUNT_PASSWORD_RESET_CONFIRM_URL = 'reset-password/{uid}/{token}/'
 
-FRONTEND_URL = "http://localhost:5173"
+
+
   
+
+
+
+
+
+CORS_ALLOW_CREDENTIALS = True
+
+
+
+
+
+
+
 
 DJANGO_REST_AUTH = {
     "PASSWORD_RESET_CONFIRM_URL": "password/reset/confirm/{uid}/{token}/",  
@@ -99,6 +113,7 @@ MIDDLEWARE = [
     #الاضافات
     'allauth.account.middleware.AccountMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    
     'django.middleware.common.CommonMiddleware',    
 ]
 CORS_ALLOWED_ORIGINS = [

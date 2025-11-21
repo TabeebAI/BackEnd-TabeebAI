@@ -9,17 +9,37 @@ from .serializers import LoginDR ,CreateDR,profil
 from rest_framework.permissions import IsAuthenticated,AllowAny,IsAdminUser
 from rest_framework.authtoken.models import Token
 from .models import DoctorsDB
-class LoginDRViwe(APIView):
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+
+class LoginDRView(APIView):
     permission_classes = [AllowAny]
-    def post(self,request):
-        ser =LoginDR(data=request.data)
+
+    def post(self, request):
+        ser = LoginDR(data=request.data)
         if ser.is_valid():
-            DR=ser.validated_data['DR']
-            refresh=RefreshToken.for_user(DR)
+            user = ser.validated_data['DR']  # هذا الـ User بعد التحقق
+
+            # ===== هنا نحدد الدور =====
+            if hasattr(user, 'doctor_profile'):
+                role = 'doctor'
+            elif hasattr(user, 'labtech_profile'):
+                role = 'labtech'
+            else:
+                role = 'unknown'
+
+            # إنشاء توكنات JWT
+            refresh = RefreshToken.for_user(user)
+
             return Response({
-                'refresh':str(refresh),
-                'access':str(refresh.access_token),
-            },status=status.HTTP_200_OK)
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'role': role,         # نضيف الدور هنا
+                'user_id': user.id    # يمكن إضافة ID المستخدم
+            }, status=status.HTTP_200_OK)
+
         return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class profilDR(viewsets.ModelViewSet):

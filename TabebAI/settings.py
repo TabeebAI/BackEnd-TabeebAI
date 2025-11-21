@@ -57,9 +57,18 @@ INSTALLED_APPS = [
     'Doctor',
     'Patients',    
     'QR',
-    'RAG',
-    'AvatarAI',
-]
+    'Laptech',
+     "daphne",            
+    "channels"
+    ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    },
+}
+
+ASGI_APPLICATION = "TabebAI.asgi.application"
 
 PASSWORD_RESET_CONFIRM_URL = "TabebAI/password/reset/confirm/{uid}/{token}/"
 MEDIA_URL = '/media/'
@@ -100,7 +109,6 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'almtwali1222@gmail.com'  
 EMAIL_HOST_PASSWORD = 'ssvs auom hzaf jbou'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -183,6 +191,9 @@ DATABASES = {
     
         }
 }
+# settings.py
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

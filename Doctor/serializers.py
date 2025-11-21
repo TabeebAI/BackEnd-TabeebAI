@@ -19,72 +19,78 @@ class LoginDR(serializers.Serializer):
                 data['DR']=DR.user
                 return data
     
+from django.contrib.auth.models import User
+from rest_framework.exceptions import ValidationError
+from rest_framework.validators import UniqueValidator
+from rest_framework import serializers
+from rest_framework.authtoken.models import Token
+from .models import DoctorsDB
+
+
 class CreateDR(serializers.ModelSerializer):
-        user = serializers.PrimaryKeyRelatedField(read_only=True)
-        full_name=serializers.CharField()
-        gender=serializers.CharField(required=True,error_messages={
-              'required' : 'M \ F'   
-        })
-        specialty=serializers.CharField()
-        phone=serializers.CharField()
-        region=serializers.CharField()
-        neighborhood=serializers.CharField()
-        license_number=serializers.CharField(
-                validators=[
-                        UniqueValidator(
-                                queryset=DoctorsDB.objects.all(),
-                                message="الرقم النقابي مسجل من قبل"
-                                
-                        )
-                ]            
-        )
-        national_id =serializers.CharField(
-                validators=[
-                        UniqueValidator(
-                                queryset= DoctorsDB.objects.all(),
-                                message="تأكد من رقمك الوطني "
-                        )
-                ]
-        )
-        class Meta:
-                model = DoctorsDB
-                fields=["user",
-                'full_name' , 'gender' , 'specialty','license_number',
-                'phone','national_id','region','neighborhood'
-                ]   
-                extra_kwargs={
-                        'license_number':{'write_only': True},
-                        'national_id':{'write_only':True}
-                }     
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    full_name = serializers.CharField()
+    gender = serializers.CharField(required=True, error_messages={
+        'required': 'M أو F مطلوب'
+    })
+    specialty = serializers.CharField()
+    phone = serializers.CharField()
+    region = serializers.CharField()
+    neighborhood = serializers.CharField()
+    license_number = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=DoctorsDB.objects.all(),
+                message="الرقم النقابي مسجل من قبل"
+            )
+        ]
+    )
+    national_id = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=DoctorsDB.objects.all(),
+                message="تأكد من رقمك الوطني "
+            )
+        ]
+    )
 
-        def validate_national_id(self,value):
-                national_str =str(value)
-                if len(national_str) != 11 or not national_str.isdigit() :
-                        raise serializers.ValidationError({
-                                'national_id':'الرقم الوطني مكون من 11 الرقم'
-                        })   
- 
-                return national_str  
-        
-        def validate_license_number(self,value):
-               
-                license_str=str(value)
-                if len(license_str) != 4 or not license_str.isdigit():
-                        raise serializers.ValidationError({
-                                "license_number":"الرقم النقابي مكون من 4 ارقام"
-                        })
+    class Meta:
+        model = DoctorsDB
+        fields = [
+            "user", 'full_name', 'gender', 'specialty',
+            'license_number', 'phone', 'national_id',
+            'region', 'neighborhood'
+        ]
+        extra_kwargs = {
+            'license_number': {'write_only': True},
+            'national_id': {'write_only': True}
+        }
 
-                return license_str
-        
-        def create(self, validated_data):
-                request = self.context.get('request')
-                username = validated_data.get('license_number')
-                password = validated_data.get('national_id')
+    def validate_national_id(self, value):
+        national_str = str(value)
+        if len(national_str) != 11 or not national_str.isdigit():
+            raise serializers.ValidationError("الرقم الوطني مكون من 11 رقم")
+        return national_str
 
-                user = User.objects.create_user(username=username, password=password)
-                Token.objects.create(user=user)
-                doctor = DoctorsDB.objects.create(user=user, **validated_data)
-                return doctor
+    def validate_license_number(self, value):
+        license_str = str(value)
+        if len(license_str) != 4 or not license_str.isdigit():
+            raise serializers.ValidationError("الرقم النقابي مكون من 4 أرقام")
+        return license_str
+
+    def create(self, validated_data):
+        username = validated_data.get('license_number')
+        password = validated_data.get('national_id')
+        username = f"D-{username}"
+        password = password
+        # إنشاء المستخدم وربط التوكن
+        user = User.objects.create_user(username=username, password=password)
+        Token.objects.create(user=user)
+
+        # إنشاء الطبيب وربطه بالمستخدم
+        doctor = DoctorsDB.objects.create(user=user, **validated_data)
+        return doctor
+
 
 
 class profil(serializers.ModelSerializer):

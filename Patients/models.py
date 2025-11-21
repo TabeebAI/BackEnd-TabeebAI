@@ -9,7 +9,7 @@ def patient_photo_path(instance, filename):
 class PatientDB(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile')
     username=models.CharField(max_length=20)
-    
+    device_token = models.CharField(max_length=255, null=True, blank=True)
     last_name=models.CharField(max_length=20)
     first_name=models.CharField(max_length=20)
     fathers_name=models.CharField(max_length=20)

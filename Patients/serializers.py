@@ -39,3 +39,12 @@ class Createpatients(serializers.ModelSerializer):
         
         return super().update(instance, validated_data)
 
+
+
+from rest_framework import serializers
+
+class MedicalQuerySerializer(serializers.Serializer):
+    question = serializers.CharField(required=True)  # اجعلها required عشان لا تكون فارغة
+    image = serializers.ImageField(required=False)
+    audio = serializers.FileField(required=False)
+

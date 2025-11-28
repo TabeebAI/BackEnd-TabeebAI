@@ -1,18 +1,13 @@
 from django.shortcuts import render
-from rest_framework import viewsets , status
+from rest_framework import viewsets, status
 from rest_framework.viewsets import ModelViewSet
-from .serializers import Createpatients , MedicalQuerySerializer
+from .serializers import Createpatients, MedicalQuerySerializer
 from rest_framework.permissions import IsAuthenticated
-from .models import PatientDB 
-
-from rest_framework.decorators import api_view
+from .models import PatientDB
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-
 import requests
 
-
-
-# Create your views here.
 class PatientsView(viewsets.ModelViewSet):
     serializer_class =Createpatients
     permission_classes=[IsAuthenticated] 
@@ -42,6 +37,8 @@ class PatientsView(viewsets.ModelViewSet):
 N8N_WEBHOOK_URL = "http://localhost:5678/webhook/muhammad"
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated]) 
+
 def medical_query_view(request):
     serializer = MedicalQuerySerializer(data=request.data)
     if serializer.is_valid():

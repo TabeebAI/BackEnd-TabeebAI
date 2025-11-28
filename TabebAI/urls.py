@@ -26,12 +26,24 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 router = DefaultRouter()
-router.register(r'profile', PatientsView, basename='patient/profile')
+router.register(r'profile', PatientsView, basename='patient-profile')
 from dj_rest_auth.views import PasswordResetConfirmView
-from QR.views import QrJwt ,QR_Token ,Doctor_Visit,Patient_Visit,patient_test,QR_Test,Qr_Laptech,list_session_laptech,Update_session 
+from QR.views import QrJwt ,QR_Token ,Doctor_Visit,Patient_Visit,patient_test,QR_Test,Qr_Laptech,list_session_laptech,Update_session ,QR_Complete,QR_Complete_Token,patient_Review
 routerDR =DefaultRouter()
-routerDR.register(r'profile',profilDR,basename='doctor/profile')
-from QR.api import MyNotifications
+routerDR.register(r'profile',profilDR,basename='doctor-profile')
+from QR.api import MyNotifications 
+
+
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+@ensure_csrf_cookie
+def get_csrf(request):
+    return JsonResponse({
+        "csrftoken": request.META.get("CSRF_COOKIE", ""),
+        "sessionid": request.session.session_key or ""
+    })  
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('TabebAI/',include('dj_rest_auth.urls')),
@@ -49,9 +61,15 @@ urlpatterns = [
     path('TabebAI/Patient/visits/',Patient_Visit),
     path('chat/', medical_query_view),
     path('TabebAI/Patient/Tests/',patient_test),
-    path('TabebAI/qrcode/tests/',QR_Test),
+    path('TabebAI/qrcode/tests/<int:id>',QR_Test),
     path('session/<str:token>/',Qr_Laptech),
     path('list/session/laptech/',list_session_laptech),
-    path('update/session/laptech/',Update_session),
+    path('update/session/laptech/<int:id>',Update_session),
     path('my-notifications/', MyNotifications.as_view(), name='my-notifications'),
+    path('TabebAI/qrcode/visit/copmlete/<int:id>',QR_Complete),
+    path('visit/complete/<str:token>/',QR_Complete_Token),
+    path('TabebAI/Review/',patient_Review),
+    path('csrf/', get_csrf, name='get-csrf')
+
+
     ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

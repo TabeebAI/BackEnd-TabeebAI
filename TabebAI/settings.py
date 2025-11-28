@@ -58,7 +58,6 @@ INSTALLED_APPS = [
     'Patients',    
     'QR',
     'Laptech',
-     "daphne",            
     "channels"
     ]
 
@@ -67,6 +66,8 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     },
 }
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 ASGI_APPLICATION = "TabebAI.asgi.application"
 
@@ -99,7 +100,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 DJANGO_REST_AUTH = {
     "PASSWORD_RESET_CONFIRM_URL": "password/reset/confirm/{uid}/{token}/",  
-    "USE_JWT": False,
+    "USE_JWT": True,
     }
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "http"
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -111,6 +112,7 @@ EMAIL_HOST_PASSWORD = 'ssvs auom hzaf jbou'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -118,12 +120,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #الاضافات
     'allauth.account.middleware.AccountMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    
-    'django.middleware.common.CommonMiddleware',    
+
 ]
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
@@ -131,7 +131,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://bdc1-137-184-161-129.ngrok-free.app/",
+    "https://bdc1-137-184-161-129.ngrok-free.app",
 ]
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'ngrok-skip-browser-warning',

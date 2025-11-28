@@ -94,14 +94,23 @@ class CreateDR(serializers.ModelSerializer):
 
 
 class profil(serializers.ModelSerializer):
+    full_name = serializers.CharField(read_only=True)
+    gender = serializers.CharField(read_only=True)
+    license_number = serializers.CharField(read_only=True)
+    national_id = serializers.CharField(read_only=True)
+    class Meta:
+        model = DoctorsDB
+        fields = ['id', 'full_name', 'gender', 'specialty', 'license_number', 'phone',
+                  'national_id', 'region', 'neighborhood']
+
+    def update(self,instance,validated_data):
+        readonly_fields=['full_name', 'gender', 'license_number', 'national_id']  
+
+
+        for field in readonly_fields:
+            if field in validated_data:
+                current_value = getattr (instance, field)
+                if current_value not in [None, '' ] :
+                    validated_data.pop(field)
         
-        class Meta:
-                model =DoctorsDB
-                fields=['id','full_name','gender','specialty','license_number','phone',
-                        'national_id','region','neighborhood']
-        def update(seld,instance,validated_data):
-                readonlu_field=['full_name','gender','license_number','national_id']
-                for field in readonlu_field:
-                        if field in validated_data:
-                                validated_data.pop(field)
-                return super().update(instance,validated_data)
+        return super().update(instance, validated_data)

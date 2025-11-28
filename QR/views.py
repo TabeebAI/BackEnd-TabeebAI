@@ -1,50 +1,29 @@
-from django.shortcuts import render ,get_object_or_404
-import qrcode
-import datetime
-import jwt
-import os
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
+from django.db.models import Q
+from django.conf import settings
+
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import IsAuthenticated, BasePermission
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 
-from QR.utils import notify_user
-
-from .models import Visit ,DoctorsDB,PatientDB,Session,LabTechDB , Notification
+import qrcode
 from io import BytesIO
-from django.conf import settings
-from django.http import HttpResponse ,JsonResponse ,StreamingHttpResponse, HttpResponseForbidden
 import uuid
-
-
-from jwt.exceptions import ExpiredSignatureError , InvalidTokenError
+import datetime
+import os
 import jwt
-from rest_framework.decorators import api_view, permission_classes 
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.decorators import login_required
 
-from datetime import date ,timedelta
-from django.utils import timezone 
-from django.db.models import Q
+from .models import Visit, DoctorsDB, PatientDB, Session, LabTechDB, Notification
+from .serializers import VisitsDoctor, VisitsPatient, TestPatient, session_laptech, ReviewPatient
+from QR.utils import notify_user
+from datetime import date, timedelta
 
-from .serializers import VisitsDoctor ,VisitsPatient , TestPatient,session_laptech
-
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
-
-from rest_framework.permissions import BasePermission
-
-
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-
-import json
-import time
-
-
-from asgiref.sync import sync_to_async
-from django.contrib.auth.models import AnonymousUser
-from django.contrib.auth import get_user
 
 class IsVisitOwner(BasePermission):
+    
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated
 
@@ -85,7 +64,7 @@ def QR_Token(request,token):
         payload = jwt.decode(token,settings.SECRET_KEY, algorithms=["HS256"])
         visit_id = payload.get("visit_id")
         visit = get_object_or_404(Visit, id=visit_id)
-        if hasattr(request.user, 'labtech_profile'):
+        if not hasattr(request.user, 'doctor_profile'):
             return Response({"error": "هذا المكان مخصص للأطباء فقط"}, status=403)
 
 
@@ -149,17 +128,14 @@ def QR_Token(request,token):
             },            
             "created": visit.created.strftime("%Y-%m-%d %H:%M"),
         })
-    except ExpiredSignatureError:
+    except jwt.ExpiredSignatureError:
         return JsonResponse({"error": "انتهت صلاحية التوكن"}, status=401)
-
-    except InvalidTokenError:
-        return JsonResponse({"error": "توكن غير صالح"}, status=400)
-    
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "توكن غير صالح"}, status=400)    
 
 
 
 @api_view(['GET'])
-@authentication_classes([JWTAuthentication])
 @permission_classes([IsVisitOwner])
 def Doctor_Visit(request):
     if not hasattr(request.user, 'doctor_profile') :
@@ -200,10 +176,10 @@ def patient_test(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def QR_Test(request):
+def QR_Test(request,id):
     patient=request.user.patient_profile
     generated_code = str(uuid.uuid4()).replace("-", "")[:8]
-    visit_id = request.GET.get("visit_id")
+    visit_id = id
 
     if not visit_id:
         return Response({"error": "لم يتم تحديد رقم الزيارة"}, status=400)
@@ -303,12 +279,12 @@ def list_session_laptech(request):
 
 @api_view(['GET','POST'])
 @permission_classes([IsVisitOwner])
-def Update_session(request):
+def Update_session(request,id):
 
     if not hasattr(request.user, 'labtech_profile'):
         return Response({'error': 'هذا المكان مخصص فقط للمخبريين'}, status=403)
 
-    session_id = request.data.get('session_id') or request.query_params.get('session_id')
+    session_id = id
     if not session_id:
         return Response({"error": "يرجى توفير session_id"}, status=400)
 
@@ -359,7 +335,123 @@ def Update_session(request):
             "doctor_name": getattr(current_visit.doctor, "full_name", "غير محدد")
         },
         "test_type": getattr(current_visit, "Type_of_Test", "غير محدد"),
+        "Analysis_Explanation":session.AnalysisExplanation,
         "uploaded": session.file.url if session.file else None
     })
 
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def QR_Complete(request,id):
+    patient=request.user.patient_profile
+    generated_code = str(uuid.uuid4()).replace("-", "")[:8]
+    visit_id = id
+    if not visit_id:
+        return Response({"error": "لم يتم تحديد رقم الزيارة"}, status=400)
+    visit = get_object_or_404(Visit, id=visit_id, patient=patient)
+    payload={
+        "visit_id" : visit.id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+    }
+    token =jwt.encode(payload,settings.SECRET_KEY,algorithm="HS256")
+    qr_data = f"http://127.0.0.1:8000/visit/complete/{token}/"
+    img = qrcode.make(qr_data)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])   
+def QR_Complete_Token(request, token):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        visit_id = payload.get("visit_id")
+
+        visit = get_object_or_404(Visit, id=visit_id)
+        session = Session.objects.filter(visit=visit).last()
+
+        if not hasattr(request.user, 'doctor_profile'):
+            return Response({"error": "هذا المسار مخصص للأطباء فقط"}, status=403)
+
+        if request.method == 'POST':
+            visit.doctor = request.user.doctor_profile
+            visit.notes = request.data.get('notes')
+            visit.recipes = request.data.get('recipes')
+            visit.treatment_name = request.data.get('treatment_name')
+
+            visit.is_permanent = request.data.get("is_permanent", 'true').lower() == 'true'
+
+            if not visit.is_permanent:
+                duration_days = int(request.data.get("duration_days", 0))
+                if duration_days > 0:
+                    visit.expires_at = timezone.now() + timedelta(days=duration_days)
+
+            visit.Test_Request = request.data.get("Test_Request", 'false').lower() == 'true'
+            if visit.Test_Request:
+                visit.Type_of_Test = request.data.get("Type_of_Test")
+
+            visit.save()
+            return JsonResponse({"success": "تم حفظ الجلسة بنجاح."})
+
+    
+        # -----------------------------------
+        birth = visit.patient.birth_date
+        today = date.today()
+
+        if birth:
+            delta = today - birth
+            years = delta.days // 365
+            days = delta.days % 365
+        else:
+            years = "غير محدد"
+            days = "غير محدد"
+
+
+        return JsonResponse({
+            "patient": {
+                "first_name": visit.patient.first_name,
+                "last_name": visit.patient.last_name,
+                "gender": visit.patient.gender,
+                "blood_type": visit.patient.blood_type,
+                "age": {"years": years, "days": days},
+                "weight": visit.patient.weight,
+                "height": visit.patient.height,
+                "treatment_name": visit.treatment_name,
+                "notes": visit.notes,
+                "recipes": visit.recipes,
+                "id": visit_id,
+                "uploaded": session.file.url if session.file else None,
+                "Analysis_Explanation":session.AnalysisExplanation
+
+                
+                
+            },
+            "created": visit.created.strftime("%Y-%m-%d %H:%M"),
+        })
+
+    except jwt.ExpiredSignatureError:
+        return JsonResponse({"error": "انتهت صلاحية التوكن"}, status=401)
+
+    except jwt.InvalidTokenError:
+        return JsonResponse({"error": "توكن غير صالح"}, status=400)
+
+
+
+
+@api_view(['GET']) 
+@permission_classes([IsAuthenticated])
+def patient_Review(request):
+    patient=PatientDB.objects.filter(user=request.user).first()
+    if not patient:
+        return Response({"error":"المريض ليس مسجل دخول "},status=404)
+    active_visits = ( Visit.objects.filter(patient=patient)
+    .filter(Q(is_permanent=True) | Q(expires_at__gt=timezone.now())).order_by('created')
+    )
+    serializer =ReviewPatient(active_visits,many=True)
+    return Response(serializer.data)
+    

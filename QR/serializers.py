@@ -26,7 +26,12 @@ class TestPatient(serializers.ModelSerializer):
         model=Visit
         fields=['Doctor_name',"Type_of_Test","id"] 
 
-
+class ReviewPatient(serializers.ModelSerializer):
+    Doctor_name=serializers.CharField(source='doctor.full_name',read_only=True)
+    Specialization=serializers.CharField(source='doctor.specialty',read_only=True)
+    class Meta:
+        model=Visit
+        fields=['Doctor_name',"Specialization","id"] 
 class session_laptech(serializers.ModelSerializer):
    
     patient_name = serializers.SerializerMethodField(read_only=True)

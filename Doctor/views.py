@@ -39,9 +39,7 @@ class LoginDRView(APIView):
             {
                 "user_id": user.id,
                 "role": role,
-                "access": access_token, 
-                "sessionid": request.session.session_key,
-                "csrftoken": request.META.get("CSRF_COOKIE", ""),
+                "access": access_token
             },
             status=status.HTTP_200_OK,
         )

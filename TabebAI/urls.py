@@ -28,10 +28,10 @@ from QR.api import MyNotifications
 from accounts.views import RefreshAccessTokenView
 from Laptech.views import CreateLabTech , LoginLabTechView
 from Doctor.views import LoginDRView ,CreateDoctor,profilDR
-from Patients.views import PatientsView , medical_query_view
+from Patients.views import PatientsView , medical_query_view ,LoginPatientView, PatientRegisterView
 from prediction.views import PredictCHDView , DailyVitalsChartView
 from Smart_Watch.views import HeartRateView ,BloodPressureView
-
+from Admin.views import AdminLoginView
 router = DefaultRouter()
 router.register(r'profile', PatientsView, basename='patient-profile')
 routerDR =DefaultRouter()
@@ -40,8 +40,9 @@ routerDR.register(r'profile',profilDR,basename='doctor-profile')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('TabebAI/',include('dj_rest_auth.urls')),
-    path('TabebAI/Registration/', include('dj_rest_auth.registration.urls')),
+    path('TabebAI/login/', AdminLoginView.as_view()),
+    path("TabebAI/login/Patient", LoginPatientView.as_view(), name="login-patient"),
+    path('TabebAI/Registration/', PatientRegisterView.as_view()),
     path("TabebAI/password/reset/confirm/<uid>/<token>/",PasswordResetConfirmView.as_view(),name="password_reset_confirm"),  
     path('TabebAI/DR/login/',LoginDRView.as_view(),name='DR_login'),
     path("TabebAI/Laptech/login/", LoginLabTechView.as_view()),

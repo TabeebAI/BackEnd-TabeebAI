@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from .models import PatientDB
+from dj_rest_auth.registration.serializers import RegisterSerializer
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 
 class Createpatients(serializers.ModelSerializer):
 
@@ -41,10 +44,62 @@ class Createpatients(serializers.ModelSerializer):
 
 
 
-from rest_framework import serializers
 
 class MedicalQuerySerializer(serializers.Serializer):
-    question = serializers.CharField(required=True)  # اجعلها required عشان لا تكون فارغة
+    question = serializers.CharField(required=True) 
     image = serializers.ImageField(required=False)
     audio = serializers.FileField(required=False)
 
+
+
+class LoginPatientSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        username = attrs.get("username", "")
+        email = attrs.get("email", "")
+        password = attrs.get("password")
+
+        if not password:
+            raise serializers.ValidationError("Password is required.")
+
+        user = None
+
+        if username:
+            user = authenticate(username=username, password=password)
+        elif email:
+            try:
+                user_obj = User.objects.get(email=email)
+                user = authenticate(username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                raise serializers.ValidationError("User with this email does not exist.")
+        else:
+            raise serializers.ValidationError("Either username or email must be provided.")
+
+        if not user:
+            raise serializers.ValidationError("Invalid credentials.")
+
+        if hasattr(user, 'doctor_profile') or hasattr(user, 'labtech_profile'):
+            raise serializers.ValidationError("This account is not a patient account.")
+
+        attrs['user'] = user
+        return attrs
+
+
+
+
+
+class PatientRegisterSerializer(RegisterSerializer):
+
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+
+    def get_cleaned_data(self):
+        data = super().get_cleaned_data()
+        data.update({
+            "first_name": self.validated_data.get("first_name", ""),
+            "last_name": self.validated_data.get("last_name", ""),
+        })
+        return data

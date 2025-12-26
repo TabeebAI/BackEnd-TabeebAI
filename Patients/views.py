@@ -1,12 +1,16 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.viewsets import ModelViewSet
-from .serializers import Createpatients, MedicalQuerySerializer
-from rest_framework.permissions import IsAuthenticated
+from .serializers import Createpatients, MedicalQuerySerializer ,LoginPatientSerializer,PatientRegisterSerializer
+from rest_framework.permissions import IsAuthenticated,AllowAny
 from .models import PatientDB
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 import requests
+from rest_framework.views import APIView
+from django.contrib.auth import login
+from TabebAI.auth import generate_refresh_token  
+from dj_rest_auth.registration.views import RegisterView
 
 class PatientsView(viewsets.ModelViewSet):
     serializer_class =Createpatients
@@ -27,10 +31,6 @@ class PatientsView(viewsets.ModelViewSet):
             return Response(serializer.data)
         except PatientDB.DoesNotExist:
             return super().create(request, *args, **kwargs)
-
-
-
-
 
 
 
@@ -59,4 +59,42 @@ def medical_query_view(request):
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class LoginPatientView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginPatientSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            login(request, user)
+            refresh_token = generate_refresh_token(user)
+            access_token = str(refresh_token.access_token)
+
+            return Response({
+                "user_id": user.id,
+                "role": "patient",
+                "access": access_token
+            }, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class PatientRegisterView(RegisterView):
+    serializer_class = PatientRegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save(request)  
+        refresh_token = generate_refresh_token(user)
+        access_token = str(refresh_token.access_token)
+
+        return Response({
+            "user_id": user.id,
+            "role": "patient",
+            "access": access_token
+        })
 

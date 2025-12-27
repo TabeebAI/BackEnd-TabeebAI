@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'QR',
     'Laptech',
     "channels",
-    "accounts",
     "Smart_Watch",
     "prediction"
     ]

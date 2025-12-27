@@ -25,13 +25,13 @@ from django.conf.urls.static import static
 
 from QR.views import QrJwt ,QR_Token ,Doctor_Visit,Patient_Visit,patient_test,QR_Test,Qr_Laptech,list_session_laptech,Update_session ,QR_Complete,QR_Complete_Token,patient_Review
 from QR.api import MyNotifications 
-from accounts.views import RefreshAccessTokenView
 from Laptech.views import CreateLabTech , LoginLabTechView
 from Doctor.views import LoginDRView ,CreateDoctor,profilDR
 from Patients.views import PatientsView , medical_query_view ,LoginPatientView, PatientRegisterView
 from prediction.views import PredictCHDView , DailyVitalsChartView
 from Smart_Watch.views import HeartRateView ,BloodPressureView
 from Admin.views import AdminLoginView
+
 router = DefaultRouter()
 router.register(r'profile', PatientsView, basename='patient-profile')
 routerDR =DefaultRouter()
@@ -64,7 +64,6 @@ urlpatterns = [
     path('TabebAI/qrcode/visit/copmlete/<int:id>',QR_Complete),
     path('visit/complete/<str:token>/',QR_Complete_Token),
     path('TabebAI/Review/',patient_Review),
-    path('refresh/', RefreshAccessTokenView.as_view()),
     path('predict/', PredictCHDView.as_view(), name='predict-chd'),
     path("watch/heart/<str:address>/",HeartRateView.as_view()),
     path("watch/BP/<str:address>/",BloodPressureView.as_view()),

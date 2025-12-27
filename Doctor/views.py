@@ -8,10 +8,9 @@ from rest_framework.permissions import AllowAny ,IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 
 from .serializers import LoginDR ,profil, CreateDR
-from TabebAI.auth import generate_refresh_token, set_auth_cookies
 from rest_framework import viewsets
 from .models import DoctorsDB
-
+from rest_framework_simplejwt.tokens import RefreshToken
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginDRView(APIView):
     permission_classes = [AllowAny]
@@ -32,7 +31,7 @@ class LoginDRView(APIView):
         request.session.flush()
         login(request, user)
 
-        refresh_token = generate_refresh_token(user)
+        refresh_token = RefreshToken.for_user(user)
         access_token = str(refresh_token.access_token)
 
         response = Response(
@@ -44,10 +43,17 @@ class LoginDRView(APIView):
             status=status.HTTP_200_OK,
         )
 
-        set_auth_cookies(response, refresh_token)
+        response.set_cookie(
+            key="refresh_token",
+            value=str(refresh_token),
+            httponly=True,
+            secure=True,      
+            samesite="Strict", 
+            max_age=7*24*60*60 
+        )
 
         return response
-          
+        
 class profilDR(viewsets.ModelViewSet):
     permission_classes= [IsAuthenticated] 
     serializer_class =profil            

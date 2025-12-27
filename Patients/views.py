@@ -9,8 +9,10 @@ from rest_framework.response import Response
 import requests
 from rest_framework.views import APIView
 from django.contrib.auth import login
-from TabebAI.auth import generate_refresh_token  
 from dj_rest_auth.registration.views import RegisterView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 class PatientsView(viewsets.ModelViewSet):
     serializer_class =Createpatients
@@ -61,25 +63,42 @@ def medical_query_view(request):
 
 
 
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class LoginPatientView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = LoginPatientSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
-            login(request, user)
-            refresh_token = generate_refresh_token(user)
-            access_token = str(refresh_token.access_token)
+        serializer.is_valid(raise_exception=True)
 
-            return Response({
+        user = serializer.validated_data["user"]
+        login(request, user)
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        response = Response(
+            {
                 "user_id": user.id,
                 "role": "patient",
-                "access": access_token
-            }, status=status.HTTP_200_OK)
+                "access": access_token,
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            },
+            status=status.HTTP_200_OK
+        )
 
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,      
+            samesite="Strict", 
+            max_age=7*24*60*60 
+        )
+
+        return response
 
 
 class PatientRegisterView(RegisterView):
@@ -88,13 +107,30 @@ class PatientRegisterView(RegisterView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save(request)  
-        refresh_token = generate_refresh_token(user)
-        access_token = str(refresh_token.access_token)
 
-        return Response({
-            "user_id": user.id,
-            "role": "patient",
-            "access": access_token
-        })
+        user = serializer.save(request)
 
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        response = Response(
+            {
+                "user_id": user.id,
+                "role": "patient",
+                "access": access_token,
+
+            },
+            status=status.HTTP_201_CREATED
+        )
+
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,       
+            samesite="Strict", 
+            max_age=7 * 24 * 60 * 60
+        )
+
+        return response
